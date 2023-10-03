@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Tooling.Connector;
 using System;
 
@@ -23,7 +24,7 @@ namespace Sirocco_test2
                 if (crmServiceClient.IsReady)
                 {
                     Console.WriteLine("Connected to Dynamics 365");
-                    CreateContact(crmServiceClient);
+                    CrmActionsPicker(crmServiceClient);
                 }
                 else
                 {
@@ -36,11 +37,54 @@ namespace Sirocco_test2
             }
 
 
-
-
             Console.WriteLine("Press any key to exit.");
             Console.ReadLine();
 
+            void CrmActionsPicker(CrmServiceClient crmServiceClient)
+            {
+                Console.WriteLine("Choose an action\n1.To create an account\n2.To create a contact\n3.To QueryTheDb");
+                string action = Console.ReadLine();
+
+                switch (action)
+                {
+
+                    case "1":
+                        CreateAccount(crmServiceClient);
+                        break;
+                    case "2":
+                        CreateContact(crmServiceClient);
+                        break;
+                    case "3":
+                        QueryTheDb(crmServiceClient);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+            void QueryTheDb(CrmServiceClient crmServiceClient)
+            {
+                QueryExpression query = new QueryExpression("account");
+                query.ColumnSet = new ColumnSet(true);
+
+                EntityCollection result = crmServiceClient.RetrieveMultiple(query);
+            }
+            void CreateAccount(CrmServiceClient crmServiceClient)
+            {
+                Console.WriteLine("Creating account...");
+
+                Entity account = new Entity("account");
+                account["name"] = "Test Account";
+                account["telephone1"] = "555-555-5555";
+                account["address1_line1"] = "123 Main St.";
+                account["address1_city"] = "Seattle";
+                account["address1_stateorprovince"] = "WA";
+                account["address1_postalcode"] = "98101";
+                account["address1_country"] = "US";
+
+                var result = crmServiceClient.Create(account);
+                Console.WriteLine($"created {result}");
+            }
             void CreateContact(CrmServiceClient crmServiceClient)
             {
                 Console.WriteLine("Creating contact...");
@@ -54,7 +98,8 @@ namespace Sirocco_test2
                 account["address1_postalcode"] = "98101";
                 account["address1_country"] = "US";
 
-                crmServiceClient.Create(account);
+                var result = crmServiceClient.Create(account);
+                Console.WriteLine($"created {result}");
             }
         }
 

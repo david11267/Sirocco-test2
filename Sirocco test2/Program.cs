@@ -69,7 +69,7 @@ namespace Sirocco_test2
                             break;
 
                         case "3":
-                            QueryTheDb(crmServiceClient);
+                            QueryTheDb3(crmServiceClient);
                             break;
                         case "4":
                             UpdateAccount(crmServiceClient);
@@ -106,6 +106,44 @@ namespace Sirocco_test2
                 EntityCollection notesResult = crmServiceClient.RetrieveMultiple(annotationQuery);
 
             }
+
+            void QueryTheDb2(CrmServiceClient crmServiceClient)
+            {
+                string fetchXml = @"
+        <fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
+            <entity name='account'>
+                <all-attributes />
+                <link-entity name='contact' from='parentcustomerid' to='accountid' link-type='inner'>
+                    <all-attributes />
+                </link-entity>
+                <link-entity name='annotation' from='objectid' to='accountid' link-type='outer'>
+                    <all-attributes />
+                </link-entity>
+            </entity>
+        </fetch>";
+
+                EntityCollection result = crmServiceClient.RetrieveMultiple(new FetchExpression(fetchXml));
+
+            }
+
+            void QueryTheDb3(CrmServiceClient crmServiceClient)
+            {
+                string fetchXml = @"
+        <fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
+            <entity name='contact'>
+                <all-attributes />
+            </entity>
+            <entity name='account'>
+                <all-attributes />
+            </entity>
+            <entity name='annotation'>
+                <all-attributes />
+            </entity>
+        </fetch>";
+
+                EntityCollection result = crmServiceClient.RetrieveMultiple(new FetchExpression(fetchXml));
+            }
+
             bool YesOrNo(string yesOrNoQuestion)
             {
                 Console.WriteLine(yesOrNoQuestion);

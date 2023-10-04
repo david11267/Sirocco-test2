@@ -78,7 +78,7 @@ namespace Sirocco_test2
                             UpdateContact(crmServiceClient);
                             break;
                         case "6":
-                            CreateNotes(crmServiceClient);
+                            CreateNote(crmServiceClient);
                             break;
 
                         default:
@@ -89,14 +89,23 @@ namespace Sirocco_test2
                 }
 
             }
+
             void QueryTheDb(CrmServiceClient crmServiceClient)
             {
-                QueryExpression query = new QueryExpression("account");
-                query.ColumnSet = new ColumnSet(true);
+                QueryExpression accountQuery = new QueryExpression("account");
+                accountQuery.ColumnSet = new ColumnSet(true);
 
-                EntityCollection result = crmServiceClient.RetrieveMultiple(query);
+                QueryExpression contactQuery = new QueryExpression("contact");
+                contactQuery.ColumnSet = new ColumnSet(true);
+
+                QueryExpression annotationQuery = new QueryExpression("annotation");
+                annotationQuery.ColumnSet = new ColumnSet(true);
+
+                EntityCollection accountResults = crmServiceClient.RetrieveMultiple(accountQuery);
+                EntityCollection contactResults = crmServiceClient.RetrieveMultiple(contactQuery);
+                EntityCollection notesResult = crmServiceClient.RetrieveMultiple(annotationQuery);
+
             }
-
             bool YesOrNo(string yesOrNoQuestion)
             {
                 Console.WriteLine(yesOrNoQuestion);
@@ -211,7 +220,42 @@ namespace Sirocco_test2
 
                 Console.WriteLine("Account updated successfully.");
             }
-            void CreateNotes(CrmServiceClient crmServiceClient) { }
+            void CreateNote(CrmServiceClient crmServiceClient)
+            {
+                Console.WriteLine("What do you want to write in your note?");
+                var noteText = Console.ReadLine();
+
+                bool toAssignToAccount = YesOrNo("Do you wish to assign the note to an account? y/n");
+                bool toAssignToContact = YesOrNo("Do you wish to assign the note to an contact? y/n");
+
+                Entity note = new Entity("annotation");
+                note["notetext"] = noteText;
+
+                if (toAssignToAccount)
+                {
+                    Console.WriteLine("What is the id of the account you wish to assign the note to?");
+                    var accountId = Console.ReadLine();
+                    EntityReference accountReference = new EntityReference("account", Guid.Parse(accountId));
+                    note["objectid"] = accountReference;
+
+                    var noteId = crmServiceClient.Create(note);
+                    Console.WriteLine($"Note created with ID: {noteId} and associated with Account ID: {accountId}");
+                }
+                else if (toAssignToContact)
+                {
+                    Console.WriteLine("What is the id of the contact you wish to assign the note to?");
+                    var contactId = Console.ReadLine();
+                    EntityReference contactReference = new EntityReference("contact", Guid.Parse(contactId));
+                    note["objectid"] = contactReference;
+
+                    var noteId = crmServiceClient.Create(note);
+                    Console.WriteLine($"Note created with ID: {noteId} and associated with Account ID: {contactId}");
+                }
+
+
+
+            }
+
         }
 
 

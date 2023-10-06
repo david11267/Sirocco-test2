@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Tooling.Connector;
 using System;
@@ -20,6 +21,8 @@ namespace Sirocco_test2
                 string crmUrl = "https://org3e92bd9b.crm4.dynamics.com/";
                 string connectionString = $"AuthType=ClientSecret;Url={crmUrl};ClientId={clientId};ClientSecret={clientSecret};Authority={authority};RequireNewInstance=True";
                 CrmServiceClient crmServiceClient = new CrmServiceClient(connectionString);
+
+
 
                 if (crmServiceClient.IsReady)
                 {
@@ -101,6 +104,7 @@ namespace Sirocco_test2
                 QueryExpression annotationQuery = new QueryExpression("annotation");
                 annotationQuery.ColumnSet = new ColumnSet(true);
 
+
                 EntityCollection accountResults = crmServiceClient.RetrieveMultiple(accountQuery);
                 EntityCollection contactResults = crmServiceClient.RetrieveMultiple(contactQuery);
                 EntityCollection notesResult = crmServiceClient.RetrieveMultiple(annotationQuery);
@@ -129,20 +133,49 @@ namespace Sirocco_test2
             void QueryTheDb3(CrmServiceClient crmServiceClient)
             {
                 string fetchXml = @"
-        <fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
-            <entity name='contact'>
-                <all-attributes />
-            </entity>
-            <entity name='account'>
-                <all-attributes />
-            </entity>
-            <entity name='annotation'>
-                <all-attributes />
-            </entity>
-        </fetch>";
+                <fetch version=""1.0"" output-format=""xml-platform"" mapping=""logical"">
+  <entity name=""contact"">
+    <all-attributes />
+    <link-entity name=""account"" from=""primarycontactid"" to=""contactid"" link-type=""outer"">
+      <all-attributes />
+    </link-entity>
+  </entity>
+</fetch>";
 
                 EntityCollection result = crmServiceClient.RetrieveMultiple(new FetchExpression(fetchXml));
+
+                foreach (var entity in result.Entities)
+                {
+                    string entityName = entity.LogicalName;
+                    string name = entity.Contains("name") ? entity.GetAttributeValue<string>("name") : "";
+
+                    Console.WriteLine($"Entity Name: {entityName}, Name: {name}");
+                }
+
             }
+
+            void QueryTheDb4(CrmServiceClient crmServiceClient)
+            {
+                var context = new OrganizationServiceContext(crmServiceClient.OrganizationServiceProxy);
+                using (OrganizationServiceContext orgServiceContext = new OrganizationServiceContext(crmServiceClient.OrganizationServiceProxy))
+                {
+
+                    QueryExpression query = new QueryExpression("contact");
+                    query.ColumnSet = new ColumnSet(true);
+
+                    LinkEntity accountLink = new LinkEntity("contact", "account", "contactid", "primarycontactid", JoinOperator.LeftOuter);
+                    accountLink.Columns = new ColumnSet(true);
+                    accountLink.EntityAlias = "account";
+
+                    query.LinkEntities.Add(accountLink);
+
+                    EntityCollection result = crmServiceClient.RetrieveMultiple(query);
+
+                }
+
+            }
+
+
 
             bool YesOrNo(string yesOrNoQuestion)
             {
